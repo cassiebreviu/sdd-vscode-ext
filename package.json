@@ -1,0 +1,86 @@
+{
+	"name": "sdd-vscode-ext",
+	"displayName": "SDD VSCode Extension",
+	"description": "A basic VS Code extension.",
+	"version": "0.0.1",
+	"publisher": "your-publisher-name",
+	"engines": {
+		"vscode": "^1.80.0"
+	},
+	"categories": ["Other"],
+	"activationEvents": ["onCommand:sdd-vscode-ext.helloWorld"],
+	"main": "./out/extension.js",
+		"contributes": {
+			"viewsContainers": {
+				"activitybar": [
+							{
+								"id": "specDrivenDevelopment",
+								"title": "Spec Driven Development",
+								"icon": "$(book)"
+							}
+				]
+			},
+			"views": {
+				"specDrivenDevelopment": [
+							{
+								"id": "todosView",
+								"name": "TODOS",
+								"icon": "$(checklist)"
+							},
+							{
+								"id": "requirementsView",
+								"name": "REQUIREMENTS",
+								"icon": "$(settings-gear)"
+							},
+							{
+								"id": "implementationsView",
+								"name": "IMPLEMENTATIONS",
+								"icon": "$(package)"
+							}
+				]
+			},
+			"commands": [
+				{
+					"command": "sdd-vscode-ext.helloWorld",
+					"title": "Hello World"
+				},
+				{
+					"command": "sdd-vscode-ext.updateTodoStatus",
+					"title": "Update TODO Status"
+				},
+				{
+					"command": "sdd-vscode-ext.addTodo",
+					"title": "Add TODO"
+				}
+			],
+			"menus": {
+				"view/item/context": [
+					{
+						"command": "sdd-vscode-ext.updateTodoStatus",
+						"when": "view == todosView && viewItem == todoItem",
+						"group": "inline"
+					}
+				],
+				"view/title": [
+					{
+						"command": "sdd-vscode-ext.addTodo",
+						"when": "view == todosView",
+						"group": "navigation"
+					}
+				]
+			}
+		},
+	"scripts": {
+		"vscode:prepublish": "npm run compile",
+		"compile": "tsc -p ./",
+		"watch": "tsc -watch -p ./",
+		"pretest": "npm run compile",
+		"test": "node ./out/test/runTest.js"
+	},
+	"devDependencies": {
+		"@types/vscode": "^1.80.0",
+		"typescript": "^5.0.0",
+		"tslint": "^6.1.3",
+		"@types/node": "^20.0.0"
+	}
+}
