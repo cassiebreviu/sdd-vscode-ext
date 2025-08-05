@@ -68,35 +68,68 @@ function parseSpecSection(filePath: string, section: string): SpecTreeItem[] {
 	const lines = fs.readFileSync(filePath, 'utf8').split(/\r?\n/);
 	const items: SpecTreeItem[] = [];
 	let inSection = false;
-	let sectionStart = 0;
 	for (let i = 0; i < lines.length; i++) {
 		const line = lines[i];
 		if (line.match(new RegExp(`^##+ ${section}`))) {
 			inSection = true;
-			sectionStart = i;
 			continue;
 		}
 		if (inSection && line.startsWith('##')) break;
 		if (inSection) {
-			// Functional Requirements
+			// Only parse requirements in requirements section
 			if (section === 'Requirements *(mandatory)*' && line.match(/^\s*- \*\*(FR-[0-9]+)\*\*: (.+)$/)) {
 				const match = line.match(/^\s*- \*\*(FR-[0-9]+)\*\*: (.+)$/);
-				if (match) items.push(new SpecTreeItem(`${match[1]}: ${match[2]}`, section, i));
+				if (match) {
+					let label = `${match[1]}: ${match[2]}`;
+					let status = 'Defined';
+					if (label.includes('[NEEDS CLARIFICATION')) status = 'Needs Clarification';
+					const item = new SpecTreeItem(label, section, i);
+					item.contextValue = 'requirementItem';
+					item.description = status;
+					item.iconPath = new vscode.ThemeIcon(
+						status === 'Needs Clarification' ? 'question' : 'checklist'
+					);
+					items.push(item);
+				}
 			}
-			// Key Entities
+			// Only parse todos in todos section
+			if (section === 'TODOS' && line.match(/^- \[([ x~])\] (.+)$/)) {
+				const match = line.match(/^- \[([ x~])\] (.+)$/);
+				if (match) {
+					let status: 'Pending' | 'In Progress' | 'Completed';
+					if (match[1] === 'x') status = 'Completed';
+					else if (match[1] === '~') status = 'In Progress';
+					else status = 'Pending';
+					const item = new SpecTreeItem(`${match[2]}`, 'Review & Acceptance Checklist', i);
+					item.contextValue = 'todoItem';
+					item.description = status;
+					item.iconPath = new vscode.ThemeIcon(
+						status === 'Completed' ? 'check' : status === 'In Progress' ? 'sync' : 'circle-outline'
+					);
+					items.push(item);
+				}
+			}
+			// Only parse key entities in requirements section
 			if (section === 'Requirements *(mandatory)*' && line.match(/^\s*- \*\*(GroceryItem|GroceryList)\*\*: (.+)$/)) {
 				const match = line.match(/^\s*- \*\*(GroceryItem|GroceryList)\*\*: (.+)$/);
 				if (match) items.push(new SpecTreeItem(`${match[1]}: ${match[2]}`, section, i));
 			}
-			// Review & Acceptance Checklist
-			if (section === 'Review & Acceptance Checklist' && line.match(/^- \[([ x])\] (.+)$/)) {
-				const match = line.match(/^- \[([ x])\] (.+)$/);
-				if (match) items.push(new SpecTreeItem(`${match[2]} [${match[1] === 'x' ? 'Done' : 'TODO'}]`, section, i));
-			}
-			// Execution Status
-			if (section === 'Execution Status' && line.match(/^- \[([ x])\] (.+)$/)) {
-				const match = line.match(/^- \[([ x])\] (.+)$/);
-				if (match) items.push(new SpecTreeItem(`${match[2]} [${match[1] === 'x' ? 'Done' : 'TODO'}]`, section, i));
+			// Only parse execution status in Implementation section
+			if (section === 'Implementation' && line.match(/^- \[([ x~])\] (.+)$/)) {
+				const match = line.match(/^- \[([ x~])\] (.+)$/);
+				if (match) {
+					let status: 'Pending' | 'In Progress' | 'Completed';
+					if (match[1] === 'x') status = 'Completed';
+					else if (match[1] === '~') status = 'In Progress';
+					else status = 'Pending';
+					const item = new SpecTreeItem(`${match[2]}`, 'Execution Status', i);
+					item.contextValue = 'todoItem';
+					item.description = status;
+					item.iconPath = new vscode.ThemeIcon(
+						status === 'Completed' ? 'check' : status === 'In Progress' ? 'sync' : 'circle-outline'
+					);
+					items.push(item);
+				}
 			}
 		}
 	}
@@ -104,6 +137,20 @@ function parseSpecSection(filePath: string, section: string): SpecTreeItem[] {
 }
 
 export function activate(context: vscode.ExtensionContext) {
+	// Reparse spec.md after each save
+	vscode.workspace.onDidSaveTextDocument((doc) => {
+		const specPath = getSpecPath();
+		if (specPath && doc.uri.fsPath === specPath) {
+			// Providers for each section
+			const todosProvider = new SpecProvider('TODOS');
+			const requirementsProvider = new SpecProvider('Requirements *(mandatory)*');
+			const implementationsProvider = new SpecProvider('Execution Status');
+			vscode.window.registerTreeDataProvider('todosView', todosProvider);
+			vscode.window.registerTreeDataProvider('requirementsView', requirementsProvider);
+			vscode.window.registerTreeDataProvider('implementationsView', implementationsProvider);
+			vscode.window.showInformationMessage('spec.md reparsed after save!');
+		}
+	});
 		// Loop until spec.md is found, then parse and show toast
 			async function waitForSpecAndParse() {
 				let specPath;
