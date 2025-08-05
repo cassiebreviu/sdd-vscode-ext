@@ -113,16 +113,16 @@ function parseSpecSection(filePath: string, section: SpecSection): SpecTreeItem[
                 }
             }
 
-            // Only parse execution status in Implementation section
-            if (section === SpecSection.Todos && line.match(/^- \[([ x~])\] (.+)$/)) {
+            // Only parse execution status in ExecutionStatus section
+            if (section === SpecSection.ExecutionStatus && line.match(/^- \[([ x~])\] (.+)$/)) {
                 const match = line.match(/^- \[([ x~])\] (.+)$/);
                 if (match) {
                     let status: 'Pending' | 'In Progress' | 'Completed';
                     if (match[1] === 'x') status = 'Completed';
                     else if (match[1] === '~') status = 'In Progress';
                     else status = 'Pending';
-                    const item = new SpecTreeItem(`${match[2]}`, SpecSection.ExecutionStatus, i);
-                    item.contextValue = 'todoItem';
+                    const item = new SpecTreeItem(`${match[2]}`, section, i);
+                    item.contextValue = 'implementationItem';
                     item.description = status;
                     item.iconPath = new vscode.ThemeIcon(
                         status === 'Completed' ? 'check' : status === 'In Progress' ? 'sync' : 'circle-outline'
