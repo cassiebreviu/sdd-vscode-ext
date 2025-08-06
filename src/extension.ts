@@ -264,7 +264,9 @@ function parseRequirements(filePath: string): SpecTreeItem[] {
         if (currentSection && currentSubsection) {
             // Bullet, numbered, or checklist item
             if (line.match(/^\s*([-*]|[x ]?[\[\]]|(\d+\.)?)\s+.+/)) {
-                const itemLabel = line.replace(/^\s*([-*]|[x ]?[\[\]]|(\d+\.)?)\s+/, '').trim();
+                let itemLabel = line.replace(/^\s*([-*]|[x ]?[\[\]]|(\d+\.)?)\s+/, '').trim();
+                // Remove checkbox syntax from the label for requirements
+                itemLabel = itemLabel.replace(/^\[[ x]\]\s*/, '');
                 if (itemLabel) {
                     const item = new SpecTreeItem(itemLabel, currentSubsection, i, vscode.TreeItemCollapsibleState.None);
                     item.contextValue = 'subitem';
@@ -328,15 +330,17 @@ function parseImplementations(filePath: string): SpecTreeItem[] {
         if (currentSection && currentSubsection) {
             // Bullet, numbered, or checklist item
             if (line.match(/^\s*([-*]|[x ]?[\[\]]|(\d+\.)?)\s+.+/)) {
-                const itemLabel = line.replace(/^\s*([-*]|[x ]?[\[\]]|(\d+\.)?)\s+/, '').trim();
+                let itemLabel = line.replace(/^\s*([-*]|[x ]?[\[\]]|(\d+\.)?)\s+/, '').trim();
+                // Determine status from checkbox syntax
+                let status = 'pending';
+                const checkboxMatch = itemLabel.match(/^\[([x ])\]/);
+                if (checkboxMatch) {
+                    status = checkboxMatch[1] === 'x' ? 'completed' : 'pending';
+                    // Remove checkbox syntax from the label for implementations  
+                    itemLabel = itemLabel.replace(/^\[[ x]\]\s*/, '');
+                }
+                
                 if (itemLabel) {
-                    // Determine status from checkbox syntax
-                    let status = 'pending';
-                    const checkboxMatch = line.match(/^\s*\[([x ])\]/);
-                    if (checkboxMatch) {
-                        status = checkboxMatch[1] === 'x' ? 'completed' : 'pending';
-                    }
-                    
                     const item = new SpecTreeItem(itemLabel, currentSubsection, i, vscode.TreeItemCollapsibleState.None, status);
                     item.contextValue = 'subitem';
                     item.iconPath = new vscode.ThemeIcon(status === 'completed' ? 'check' : 'circle-outline');
