@@ -385,9 +385,9 @@ export function activate(context: vscode.ExtensionContext) {
         }
         
         if (!specPath || !fs.existsSync(specPath)) {
-            vscode.window.showErrorMessage('spec.md not found in workspace. Will retry every 5 minutes. Please add spec.md to your project.');
+            vscode.window.showErrorMessage('spec.md not found in workspace. Will retry every 1 minute. Please add spec.md to your project.');
             
-            // Start 5-minute retry mechanism
+            // Start 1-minute retry mechanism
             function scheduleRetry() {
                 retryTimer = setTimeout(async () => {
                     const newSpecPath = getSpecPath();
@@ -410,7 +410,7 @@ export function activate(context: vscode.ExtensionContext) {
                     } else {
                         scheduleRetry(); // Continue retrying
                     }
-                }, 5 * 60 * 1000); // 5 minutes
+                }, 1 * 60 * 1000); // 1 minute
             }
             scheduleRetry();
             return;
