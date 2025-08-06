@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
+import { SddScriptExecutor } from './sddScripts';
 
 let retryTimer: NodeJS.Timeout | undefined;
 
@@ -502,6 +503,108 @@ export function activate(context: vscode.ExtensionContext) {
             const pos = new vscode.Position(line, 0);
             editor.revealRange(new vscode.Range(pos, pos), vscode.TextEditorRevealType.InCenter);
             editor.selection = new vscode.Selection(pos, pos);
+        })
+    );
+
+    // Initialize SDD script executor
+    const sddExecutor = new SddScriptExecutor(context.extensionPath);
+    context.subscriptions.push(sddExecutor);
+
+    // SDD: Create New Feature command
+    context.subscriptions.push(
+        vscode.commands.registerCommand('sdd-vscode-ext.createNewFeature', async () => {
+            const featureDescription = await vscode.window.showInputBox({
+                prompt: 'Enter a description for the new feature',
+                placeHolder: 'e.g., "Add user authentication system"',
+                validateInput: (value) => {
+                    if (!value || value.trim().length === 0) {
+                        return 'Feature description cannot be empty';
+                    }
+                    return null;
+                }
+            });
+
+            if (!featureDescription) {
+                return;
+            }
+
+            try {
+                const result = await sddExecutor.createNewFeature(featureDescription);
+                vscode.window.showInformationMessage(`Feature created: ${result.branchName}`);
+                
+                // Optionally open the spec file
+                if (result.specFile && fs.existsSync(result.specFile)) {
+                    const doc = await vscode.workspace.openTextDocument(result.specFile);
+                    await vscode.window.showTextDocument(doc);
+                }
+                
+                // Refresh the providers to show the new spec
+                refreshAllProviders();
+            } catch (error: any) {
+                vscode.window.showErrorMessage(`Failed to create feature: ${error.message}`);
+            }
+        })
+    );
+
+    // SDD: Setup Implementation Plan command  
+    context.subscriptions.push(
+        vscode.commands.registerCommand('sdd-vscode-ext.setupPlan', async () => {
+            try {
+                const result = await sddExecutor.setupPlan();
+                vscode.window.showInformationMessage(`Implementation plan setup for branch: ${result.branch}`);
+                
+                // Optionally open the plan file
+                if (result.implPlan && fs.existsSync(result.implPlan)) {
+                    const doc = await vscode.workspace.openTextDocument(result.implPlan);
+                    await vscode.window.showTextDocument(doc);
+                }
+            } catch (error: any) {
+                vscode.window.showErrorMessage(`Failed to setup plan: ${error.message}`);
+            }
+        })
+    );
+
+    // SDD: Check Task Prerequisites command
+    context.subscriptions.push(
+        vscode.commands.registerCommand('sdd-vscode-ext.checkPrerequisites', async () => {
+            try {
+                const result = await sddExecutor.checkPrerequisites();
+                const docCount = result.availableDocs.length;
+                
+                if (docCount > 0) {
+                    vscode.window.showInformationMessage(
+                        `Prerequisites check passed. Found ${docCount} available documents: ${result.availableDocs.join(', ')}`
+                    );
+                } else {
+                    vscode.window.showWarningMessage('Prerequisites check completed. Some documents may be missing.');
+                }
+            } catch (error: any) {
+                vscode.window.showErrorMessage(`Prerequisites check failed: ${error.message}`);
+            }
+        })
+    );
+
+    // SDD: Update Agent Context command
+    context.subscriptions.push(
+        vscode.commands.registerCommand('sdd-vscode-ext.updateAgentContext', async () => {
+            const agentType = await vscode.window.showQuickPick(
+                ['claude', 'gemini', 'copilot'],
+                {
+                    placeHolder: 'Select agent type (optional)',
+                    canPickMany: false
+                }
+            );
+
+            try {
+                await sddExecutor.updateAgentContext(agentType);
+                vscode.window.showInformationMessage(
+                    agentType 
+                        ? `Agent context updated for ${agentType}` 
+                        : 'Agent context updated for all supported agents'
+                );
+            } catch (error: any) {
+                vscode.window.showErrorMessage(`Failed to update agent context: ${error.message}`);
+            }
         })
     );
 }

@@ -48,9 +48,43 @@
 					"command": "sdd-vscode-ext.reparseSpec",
 					"title": "Reparse Spec",
 					"icon": "$(refresh)"
+				},
+				{
+					"command": "sdd-vscode-ext.createNewFeature",
+					"title": "SDD: Create New Feature",
+					"icon": "$(add)"
+				},
+				{
+					"command": "sdd-vscode-ext.setupPlan",
+					"title": "SDD: Setup Implementation Plan",
+					"icon": "$(checklist)"
+				},
+				{
+					"command": "sdd-vscode-ext.checkPrerequisites",
+					"title": "SDD: Check Task Prerequisites",
+					"icon": "$(check)"
+				},
+				{
+					"command": "sdd-vscode-ext.updateAgentContext",
+					"title": "SDD: Update Agent Context",
+					"icon": "$(robot)"
 				}
 			],
 			"menus": {
+				"commandPalette": [
+					{
+						"command": "sdd-vscode-ext.createNewFeature"
+					},
+					{
+						"command": "sdd-vscode-ext.setupPlan"
+					},
+					{
+						"command": "sdd-vscode-ext.checkPrerequisites"
+					},
+					{
+						"command": "sdd-vscode-ext.updateAgentContext"
+					}
+				],
 				"view/title": [
 					{
 						"command": "sdd-vscode-ext.reparseSpec",
@@ -65,6 +99,16 @@
 					{
 						"command": "sdd-vscode-ext.reparseSpec",
 						"when": "view == implementationsView",
+						"group": "navigation"
+					},
+					{
+						"command": "sdd-vscode-ext.createNewFeature",
+						"when": "view == specNavigationView",
+						"group": "navigation"
+					},
+					{
+						"command": "sdd-vscode-ext.setupPlan",
+						"when": "view == specNavigationView",
 						"group": "navigation"
 					}
 				]
