@@ -72,25 +72,31 @@ class SpecProvider implements vscode.TreeDataProvider<SpecTreeItem> {
         if (!element) {
             // Top-level sections only
             return Promise.resolve(this.items.filter(item => item.contextValue === 'section'));
-        } else {
+        } else if (element.contextValue === 'section') {
             // Subsections for this section
             return Promise.resolve(this.items.filter(item => item.contextValue === 'subsection' && item.section === element.label));
+        } else if (element.contextValue === 'subsection') {
+            // Subitems for this subsection
+            return Promise.resolve(this.items.filter(item => item.contextValue === 'subitem' && item.section === element.label));
+        } else {
+            return Promise.resolve([]);
         }
     }
 }
-
 
 function parseSpecSections(filePath: string): SpecTreeItem[] {
     if (!fs.existsSync(filePath)) return [];
     const lines = fs.readFileSync(filePath, 'utf8').split(/\r?\n/);
     const items: SpecTreeItem[] = [];
     let currentSection: string | undefined = undefined;
+    let currentSubsection: string | undefined = undefined;
     for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
         // Match ## Section
         const sectionMatch = line.match(/^##\s+(.+)/);
         if (sectionMatch) {
             currentSection = sectionMatch[1].trim();
+            currentSubsection = undefined;
             const item = new SpecTreeItem(currentSection, currentSection, i, vscode.TreeItemCollapsibleState.Collapsed);
             item.contextValue = 'section';
             item.iconPath = new vscode.ThemeIcon('symbol-key');
@@ -100,16 +106,29 @@ function parseSpecSections(filePath: string): SpecTreeItem[] {
         // Match ### Subsection
         const subSectionMatch = line.match(/^###\s+(.+)/);
         if (subSectionMatch && currentSection) {
-            const subLabel = subSectionMatch[1].trim();
-            const item = new SpecTreeItem(subLabel, currentSection, i, vscode.TreeItemCollapsibleState.None);
+            currentSubsection = subSectionMatch[1].trim();
+            const item = new SpecTreeItem(currentSubsection, currentSection, i, vscode.TreeItemCollapsibleState.Collapsed);
             item.contextValue = 'subsection';
             item.iconPath = new vscode.ThemeIcon('symbol-field');
             items.push(item);
+            continue;
+        }
+        // Match items under subsection (bullets, numbers, checklists)
+        if (currentSection && currentSubsection) {
+            // Bullet, numbered, or checklist item
+            if (line.match(/^\s*([-*]|[x ]?[\[\]]|(\d+\.)?)\s+.+/)) {
+                const itemLabel = line.replace(/^\s*([-*]|[x ]?[\[\]]|(\d+\.)?)\s+/, '').trim();
+                if (itemLabel) {
+                    const item = new SpecTreeItem(itemLabel, currentSubsection, i, vscode.TreeItemCollapsibleState.None);
+                    item.contextValue = 'subitem';
+                    item.iconPath = new vscode.ThemeIcon('list-unordered');
+                    items.push(item);
+                }
+            }
         }
     }
     return items;
 }
-
 
 export function activate(context: vscode.ExtensionContext) {
     // Reparse spec.md after each save
