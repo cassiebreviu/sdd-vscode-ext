@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import { exec } from 'child_process';
+import { exec, spawn } from 'child_process';
 
 let retryTimer: NodeJS.Timeout | undefined;
 
@@ -379,18 +379,44 @@ export function activate(context: vscode.ExtensionContext) {
             });
 
             function runUvxCommand() {
-                const command = `uvx --from git+https://github.com/localden/sdd.git specify init --here --ai copilot`;
-                exec(command, (error, stdout, stderr) => {
-                    if (error) {
-                        vscode.window.showErrorMessage(`Failed to start SDD project: ${error.message}`);
-                        console.error('SDD project start error:', error);
-                        return;
+                const outputChannel = vscode.window.createOutputChannel('SDD CLI Output');
+                outputChannel.show(true);
+                const args = ['--from', 'git+https://github.com/localden/sdd.git', 'specify', 'init', '--here', '--ai', 'copilot'];
+                outputChannel.appendLine(`Running: uvx ${args.join(' ')}`);
+                const child = spawn('uvx', args, { shell: true });
+
+                let buffer = '';
+                child.stdout.on('data', async (data) => {
+                    const text = data.toString();
+                    outputChannel.append(text);
+                    buffer += text;
+                    // Detect prompt (simple heuristic: line ends with ? or : or >)
+                    const lines = buffer.split(/\r?\n/);
+                    const lastLine = lines[lines.length - 2] || lines[lines.length - 1];
+                    if (/\?\s*$|:\s*$|>\s*$/.test(lastLine)) {
+                        buffer = '';
+                        const userInput = await vscode.window.showInputBox({ prompt: lastLine.trim() });
+                        if (userInput !== undefined) {
+                            child.stdin.write(userInput + '\n');
+                            outputChannel.appendLine(`> ${userInput}`);
+                        }
                     }
-                    if (stderr) {
-                        console.warn('SDD project start warning:', stderr);
+                });
+                child.stderr.on('data', (data) => {
+                    outputChannel.append(data.toString());
+                });
+                child.on('error', (error) => {
+                    vscode.window.showErrorMessage(`Failed to start SDD project: ${error.message}`);
+                    outputChannel.appendLine(`ERROR: ${error.message}`);
+                    outputChannel.appendLine(error.stack || '');
+                });
+                child.on('close', (code) => {
+                    if (code === 0) {
+                        vscode.window.showInformationMessage('SDD project started successfully!');
+                    } else {
+                        vscode.window.showErrorMessage(`SDD project process exited with code ${code}`);
+                        outputChannel.appendLine(`Process exited with code ${code}`);
                     }
-                    vscode.window.showInformationMessage('SDD project started successfully!');
-                    console.log('SDD project start output:', stdout);
                 });
             }
         })
