@@ -28,11 +28,6 @@
 						"icon": "$(book)"
 					},
 					{
-						"id": "todosView",
-						"name": "TODOS",
-						"icon": "$(checklist)"
-					},
-					{
 						"id": "requirementsView",
 						"name": "REQUIREMENTS",
 						"icon": "$(settings-gear)"
@@ -48,31 +43,9 @@
 				{
 					"command": "sdd-vscode-ext.helloWorld",
 					"title": "Hello World"
-				},
-				{
-					"command": "sdd-vscode-ext.updateTodoStatus",
-					"title": "Update TODO Status"
-				},
-				{
-					"command": "sdd-vscode-ext.addTodo",
-					"title": "Add TODO"
 				}
 			],
 			"menus": {
-				"view/item/context": [
-					{
-						"command": "sdd-vscode-ext.updateTodoStatus",
-						"when": "view == todosView && viewItem == todoItem",
-						"group": "inline"
-					}
-				],
-				"view/title": [
-					{
-						"command": "sdd-vscode-ext.addTodo",
-						"when": "view == todosView",
-						"group": "navigation"
-					}
-				]
 			}
 		},
 	"scripts": {
