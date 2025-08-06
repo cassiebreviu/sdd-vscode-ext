@@ -22,21 +22,26 @@
 			},
 			"views": {
 				"specDrivenDevelopment": [
-							{
-								"id": "todosView",
-								"name": "TODOS",
-								"icon": "$(checklist)"
-							},
-							{
-								"id": "requirementsView",
-								"name": "REQUIREMENTS",
-								"icon": "$(settings-gear)"
-							},
-							{
-								"id": "implementationsView",
-								"name": "IMPLEMENTATIONS",
-								"icon": "$(package)"
-							}
+					{
+						"id": "specNavigationView",
+						"name": "Spec Navigation",
+						"icon": "$(book)"
+					},
+					{
+						"id": "todosView",
+						"name": "TODOS",
+						"icon": "$(checklist)"
+					},
+					{
+						"id": "requirementsView",
+						"name": "REQUIREMENTS",
+						"icon": "$(settings-gear)"
+					},
+					{
+						"id": "implementationsView",
+						"name": "IMPLEMENTATIONS",
+						"icon": "$(package)"
+					}
 				]
 			},
 			"commands": [
