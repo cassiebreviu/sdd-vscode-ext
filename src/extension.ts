@@ -403,6 +403,33 @@ function parseImplementations(filePath: string): SpecTreeItem[] {
 }
 
 export function activate(context: vscode.ExtensionContext) {
+    // Command to start a new project using SDD CLI
+    context.subscriptions.push(
+        vscode.commands.registerCommand('sdd-vscode-ext.startProject', async () => {
+            const projectName = await vscode.window.showInputBox({
+                prompt: 'Enter the project name for SDD initialization',
+                placeHolder: 'my-project'
+            });
+            if (!projectName) {
+                vscode.window.showWarningMessage('Project name is required to start SDD project.');
+                return;
+            }
+            vscode.window.showInformationMessage(`Starting SDD project: ${projectName}`);
+            const command = `uvx --from git+https://github.com/localden/sdd.git specify init ${projectName} --ai copilot`;
+            exec(command, (error, stdout, stderr) => {
+                if (error) {
+                    vscode.window.showErrorMessage(`Failed to start SDD project: ${error.message}`);
+                    console.error('SDD project start error:', error);
+                    return;
+                }
+                if (stderr) {
+                    console.warn('SDD project start warning:', stderr);
+                }
+                vscode.window.showInformationMessage('SDD project started successfully!');
+                console.log('SDD project start output:', stdout);
+            });
+        })
+    );
     // Install SDD CLI tool when extension is activated
     installSddCliTool().catch(err => {
         console.error('Error during SDD CLI installation:', err);
