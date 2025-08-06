@@ -5,53 +5,6 @@ import { exec } from 'child_process';
 
 let retryTimer: NodeJS.Timeout | undefined;
 
-async function installSddCliTool(): Promise<void> {
-    return new Promise((resolve) => {
-        // Get the parent folder name for the project
-        const folders = vscode.workspace.workspaceFolders;
-        let projectName = 'project';
-        if (folders && folders.length > 0) {
-            projectName = path.basename(folders[0].uri.fsPath);
-        }
-
-        // First check if the SDD tool is already installed
-        exec('uv tool list', (listError, listStdout, listStderr) => {
-            // If UV is not available, skip the check and proceed to installation
-            if (listError && (listError.message.includes('uv: command not found') || listError.message.includes('not recognized'))) {
-                vscode.window.showWarningMessage('UV is not installed. Please install UV first to use the SDD CLI tool. Visit https://docs.astral.sh/uv/getting-started/installation/');
-                resolve();
-                return;
-            }
-
-            // Check if SDD is already installed
-            if (listStdout && listStdout.includes('sdd')) {
-                vscode.window.showInformationMessage('SDD CLI tool is already installed.');
-                resolve();
-                return;
-            }
-
-            // Install and initialize the SDD tool using uvx
-            vscode.window.showInformationMessage('Installing and initializing SDD CLI tool...');
-            const installCmd = `uvx --from git+https://github.com/localden/sdd.git specify init ${projectName} --ai copilot`;
-            exec(installCmd, (error, stdout, stderr) => {
-                if (error) {
-                    vscode.window.showErrorMessage(`Failed to install/init SDD CLI tool: ${error.message}`);
-                    console.error('SDD CLI installation/init error:', error);
-                    resolve(); // Don't block extension activation
-                    return;
-                }
-
-                if (stderr) {
-                    console.warn('SDD CLI installation/init warning:', stderr);
-                }
-
-                vscode.window.showInformationMessage('SDD CLI tool installed and initialized successfully!');
-                console.log('SDD CLI installation/init output:', stdout);
-                resolve();
-            });
-        });
-    });
-}
 
 function getSpecPath(): string | undefined {
 	const folders = vscode.workspace.workspaceFolders;
@@ -430,10 +383,6 @@ export function activate(context: vscode.ExtensionContext) {
             });
         })
     );
-    // Install SDD CLI tool when extension is activated
-    installSddCliTool().catch(err => {
-        console.error('Error during SDD CLI installation:', err);
-    });
 
     // Reparse spec.md after each save
     let provider: SpecProvider | undefined;
