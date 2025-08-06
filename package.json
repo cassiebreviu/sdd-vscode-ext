@@ -55,7 +55,11 @@
 		"pretest": "npm run compile",
 		"test": "node ./out/test/runTest.js"
 	},
-	"devDependencies": {
+		"repository": {
+			"type": "git",
+			"url": "https://github.com/cassiebreviu/sdd-vscode-ext.git"
+		},
+		"devDependencies": {
 		"@types/vscode": "^1.80.0",
 		"typescript": "^5.0.0",
 		"tslint": "^6.1.3",

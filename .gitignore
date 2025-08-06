@@ -35,3 +35,4 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 specs/002-simple-crud-app/spec.md
+sdd-vscode-ext-0.0.1.vsix
