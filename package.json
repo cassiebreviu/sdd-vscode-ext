@@ -1,7 +1,7 @@
 {
 	"name": "sdd-vscode-ext",
 	"displayName": "SDD VSCode Extension",
-	"description": "A basic VS Code extension.",
+	"description": "VS Code extension for Specification-Driven Development (SDD) workflows and spec navigation",
 	"version": "0.0.1",
 	"publisher": "your-publisher-name",
 	"engines": {
