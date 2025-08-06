@@ -359,28 +359,40 @@ export function activate(context: vscode.ExtensionContext) {
     // Command to start a new project using SDD CLI
     context.subscriptions.push(
         vscode.commands.registerCommand('sdd-vscode-ext.startProject', async () => {
-            const projectName = await vscode.window.showInputBox({
-                prompt: 'Enter the project name for SDD initialization',
-                placeHolder: 'my-project'
+            vscode.window.showInformationMessage('Starting SDD project in this folder...');
+            // Check if uvx is installed
+            exec('which uvx', (whichError, whichStdout, whichStderr) => {
+                if (whichError || !whichStdout.trim()) {
+                    vscode.window.showInformationMessage('uvx not found. Installing uvx...');
+                    exec('pipx install uv', (pipxError, pipxStdout, pipxStderr) => {
+                        if (pipxError) {
+                            vscode.window.showErrorMessage('Failed to install uvx using pipx. Please install uvx manually: https://docs.astral.sh/uv/getting-started/installation/');
+                            console.error('pipx install uv error:', pipxError);
+                            return;
+                        }
+                        vscode.window.showInformationMessage('uvx installed successfully! Running SDD project initialization...');
+                        runUvxCommand();
+                    });
+                } else {
+                    runUvxCommand();
+                }
             });
-            if (!projectName) {
-                vscode.window.showWarningMessage('Project name is required to start SDD project.');
-                return;
+
+            function runUvxCommand() {
+                const command = `uvx --from git+https://github.com/localden/sdd.git specify init --here --ai copilot`;
+                exec(command, (error, stdout, stderr) => {
+                    if (error) {
+                        vscode.window.showErrorMessage(`Failed to start SDD project: ${error.message}`);
+                        console.error('SDD project start error:', error);
+                        return;
+                    }
+                    if (stderr) {
+                        console.warn('SDD project start warning:', stderr);
+                    }
+                    vscode.window.showInformationMessage('SDD project started successfully!');
+                    console.log('SDD project start output:', stdout);
+                });
             }
-            vscode.window.showInformationMessage(`Starting SDD project: ${projectName}`);
-            const command = `uvx --from git+https://github.com/localden/sdd.git specify init ${projectName} --ai copilot`;
-            exec(command, (error, stdout, stderr) => {
-                if (error) {
-                    vscode.window.showErrorMessage(`Failed to start SDD project: ${error.message}`);
-                    console.error('SDD project start error:', error);
-                    return;
-                }
-                if (stderr) {
-                    console.warn('SDD project start warning:', stderr);
-                }
-                vscode.window.showInformationMessage('SDD project started successfully!');
-                console.log('SDD project start output:', stdout);
-            });
         })
     );
 
