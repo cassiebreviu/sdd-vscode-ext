@@ -1,5 +1,8 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import * as vscode from 'vscode';
+
+let retryTimer: NodeJS.Timeout | undefined;
 
 function getSpecPath(): string | undefined {
 	const folders = vscode.workspace.workspaceFolders;
@@ -18,8 +21,6 @@ function getSpecPath(): string | undefined {
 	}
 	return undefined;
 }
-
-import * as vscode from 'vscode';
 
 class SpecTreeItem extends vscode.TreeItem {
 	command?: vscode.Command;
@@ -358,12 +359,16 @@ export function activate(context: vscode.ExtensionContext) {
     let requirementsProvider: RequirementsProvider | undefined;
     let implementationsProvider: ImplementationsProvider | undefined;
     
+    function refreshAllProviders() {
+        if (provider) provider.refresh();
+        if (requirementsProvider) requirementsProvider.refresh();
+        if (implementationsProvider) implementationsProvider.refresh();
+    }
+    
     vscode.workspace.onDidSaveTextDocument((doc) => {
         const specPath = getSpecPath();
         if (specPath && doc.uri.fsPath === specPath) {
-            if (provider) provider.refresh();
-            if (requirementsProvider) requirementsProvider.refresh();
-            if (implementationsProvider) implementationsProvider.refresh();
+            refreshAllProviders();
             vscode.window.showInformationMessage('spec.md reparsed after save!');
         }
     });
@@ -378,8 +383,36 @@ export function activate(context: vscode.ExtensionContext) {
             }
             await new Promise(res => setTimeout(res, 500));
         }
+        
         if (!specPath || !fs.existsSync(specPath)) {
-            vscode.window.showErrorMessage('spec.md not found in workspace. Please add spec.md to your project.');
+            vscode.window.showErrorMessage('spec.md not found in workspace. Will retry every 5 minutes. Please add spec.md to your project.');
+            
+            // Start 5-minute retry mechanism
+            function scheduleRetry() {
+                retryTimer = setTimeout(async () => {
+                    const newSpecPath = getSpecPath();
+                    if (newSpecPath && fs.existsSync(newSpecPath)) {
+                        vscode.window.showInformationMessage('spec.md found and parsed!');
+                        if (!provider) {
+                            // Initialize providers if they haven't been created yet
+                            provider = new SpecProvider();
+                            requirementsProvider = new RequirementsProvider();
+                            implementationsProvider = new ImplementationsProvider();
+                            
+                            vscode.window.registerTreeDataProvider('specNavigationView', provider);
+                            vscode.window.registerTreeDataProvider('requirementsView', requirementsProvider);
+                            vscode.window.registerTreeDataProvider('implementationsView', implementationsProvider);
+                        } else {
+                            // Refresh existing providers
+                            refreshAllProviders();
+                        }
+                        setupFileWatcher(); // Setup file watcher for the found spec
+                    } else {
+                        scheduleRetry(); // Continue retrying
+                    }
+                }, 5 * 60 * 1000); // 5 minutes
+            }
+            scheduleRetry();
             return;
         }
         
@@ -392,6 +425,10 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.window.registerTreeDataProvider('requirementsView', requirementsProvider);
         vscode.window.registerTreeDataProvider('implementationsView', implementationsProvider);
 
+        setupFileWatcher();
+    }
+    
+    function setupFileWatcher() {
         // Watch spec.md for changes
         let specFolder = undefined;
         const folders = vscode.workspace.workspaceFolders;
@@ -401,27 +438,56 @@ export function activate(context: vscode.ExtensionContext) {
         if (specFolder) {
             const watcher = vscode.workspace.createFileSystemWatcher(new vscode.RelativePattern(specFolder, 'spec.md'));
             watcher.onDidChange(() => {
-                if (provider) provider.refresh();
-                if (requirementsProvider) requirementsProvider.refresh();
-                if (implementationsProvider) implementationsProvider.refresh();
+                refreshAllProviders();
                 vscode.window.showInformationMessage('spec.md re-parsed!');
             });
             watcher.onDidCreate(() => {
-                if (provider) provider.refresh();
-                if (requirementsProvider) requirementsProvider.refresh();
-                if (implementationsProvider) implementationsProvider.refresh();
+                refreshAllProviders();
                 vscode.window.showInformationMessage('spec.md re-parsed!');
             });
             watcher.onDidDelete(() => {
-                if (provider) provider.refresh();
-                if (requirementsProvider) requirementsProvider.refresh();
-                if (implementationsProvider) implementationsProvider.refresh();
+                refreshAllProviders();
                 vscode.window.showErrorMessage('spec.md deleted from workspace.');
             });
             context.subscriptions.push(watcher);
         }
     }
     waitForSpecAndParse();
+
+    // Command to manually reparse spec
+    context.subscriptions.push(
+        vscode.commands.registerCommand('sdd-vscode-ext.reparseSpec', async () => {
+            // Clear existing retry timer
+            if (retryTimer) {
+                clearTimeout(retryTimer);
+                retryTimer = undefined;
+            }
+            
+            const specPath = getSpecPath();
+            if (!specPath || !fs.existsSync(specPath)) {
+                vscode.window.showErrorMessage('spec.md not found in workspace. Please add spec.md to your project.');
+                // Restart the retry mechanism
+                waitForSpecAndParse();
+                return;
+            }
+            
+            // Initialize providers if they don't exist yet
+            if (!provider) {
+                provider = new SpecProvider();
+                requirementsProvider = new RequirementsProvider();
+                implementationsProvider = new ImplementationsProvider();
+                
+                vscode.window.registerTreeDataProvider('specNavigationView', provider);
+                vscode.window.registerTreeDataProvider('requirementsView', requirementsProvider);
+                vscode.window.registerTreeDataProvider('implementationsView', implementationsProvider);
+                setupFileWatcher();
+            } else {
+                refreshAllProviders();
+            }
+            
+            vscode.window.showInformationMessage('spec.md manually reparsed!');
+        })
+    );
 
     // Command to open spec.md at the right line
     context.subscriptions.push(
@@ -440,4 +506,9 @@ export function activate(context: vscode.ExtensionContext) {
     );
 }
 
-export function deactivate() {}
+export function deactivate() {
+    // Clean up retry timer
+    if (retryTimer) {
+        clearTimeout(retryTimer);
+    }
+}

@@ -43,9 +43,31 @@
 				{
 					"command": "sdd-vscode-ext.helloWorld",
 					"title": "Hello World"
+				},
+				{
+					"command": "sdd-vscode-ext.reparseSpec",
+					"title": "Reparse Spec",
+					"icon": "$(refresh)"
 				}
 			],
 			"menus": {
+				"view/title": [
+					{
+						"command": "sdd-vscode-ext.reparseSpec",
+						"when": "view == specNavigationView",
+						"group": "navigation"
+					},
+					{
+						"command": "sdd-vscode-ext.reparseSpec",
+						"when": "view == requirementsView",
+						"group": "navigation"
+					},
+					{
+						"command": "sdd-vscode-ext.reparseSpec",
+						"when": "view == implementationsView",
+						"group": "navigation"
+					}
+				]
 			}
 		},
 	"scripts": {
