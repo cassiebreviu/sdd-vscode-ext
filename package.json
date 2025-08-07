@@ -1,18 +1,18 @@
 {
-	"name": "sdd-vscode-ext",
-	"displayName": "SDD VSCode Extension",
-	"description": "A basic VS Code extension.",
+	"name": "specify",
+	"displayName": "Specify",
+	"description": "A VS Code extension for managing specifications for software development.",
 	"version": "0.0.1",
-	"publisher": "your-publisher-name",
+	"publisher": "Microsoft",
 	"engines": {
 		"vscode": "^1.80.0"
 	},
 	"categories": ["Other"],
 	"main": "./out/extension.js",
 	"activationEvents": [
-		"onCommand:sdd-vscode-ext.helloWorld",
-		"onCommand:sdd-vscode-ext.reparseSpec",
-		"onCommand:sdd-vscode-ext.startProject"
+		"onCommand:specify.helloWorld",
+		"onCommand:specify.reparseSpec",
+		"onCommand:specify.startProject"
 	],
 		"contributes": {
 			"viewsContainers": {
