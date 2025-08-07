@@ -9,6 +9,11 @@
 	},
 	"categories": ["Other"],
 	"main": "./out/extension.js",
+	"activationEvents": [
+		"onCommand:sdd-vscode-ext.helloWorld",
+		"onCommand:sdd-vscode-ext.reparseSpec",
+		"onCommand:sdd-vscode-ext.startProject"
+	],
 		"contributes": {
 			"viewsContainers": {
 				"activitybar": [

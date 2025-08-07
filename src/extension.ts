@@ -383,7 +383,10 @@ export function activate(context: vscode.ExtensionContext) {
                 outputChannel.show(true);
                 const args = ['--from', 'git+https://github.com/localden/sdd.git', 'specify', 'init', '--here', '--ai', 'copilot'];
                 outputChannel.appendLine(`Running: uvx ${args.join(' ')}`);
-                const child = spawn('uvx', args, { shell: true });
+                // Set cwd to the current workspace folder
+                const folders = vscode.workspace.workspaceFolders;
+                const cwd = folders && folders.length > 0 ? folders[0].uri.fsPath : process.cwd();
+                const child = spawn('uvx', args, { shell: true, cwd });
 
                 let buffer = '';
                 child.stdout.on('data', async (data) => {
