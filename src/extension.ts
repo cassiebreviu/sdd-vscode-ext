@@ -213,9 +213,9 @@ function parseSpecSections(filePath: string): SpecTreeItem[] {
         }
         // Match items under subsection (bullets, numbers, checklists)
         if (currentSection && currentSubsection) {
-            // Bullet, numbered, or checklist item
-            if (line.match(/^\s*([-*]|[x ]?[\[\]]|(\d+\.)?)\s+.+/)) {
-                const itemLabel = line.replace(/^\s*([-*]|[x ]?[\[\]]|(\d+\.)?)\s+/, '').trim();
+            // Bullet, numbered, or checklist item - improved regex to catch all patterns
+            if (line.match(/^\s*([-*+]|\d+\.|\[[x ]\])\s+.+/)) {
+                let itemLabel = line.replace(/^\s*([-*+]|\d+\.|\[[x ]\])\s*/, '').trim();
                 const itemKey = `${currentSection}::${currentSubsection}::${itemLabel}`;
                 if (itemLabel && !subitemSet.has(itemKey)) {
                     const item = new SpecTreeItem(itemLabel, currentSubsection, i, vscode.TreeItemCollapsibleState.None);
@@ -247,8 +247,12 @@ function parseRequirements(filePath: string): SpecTreeItem[] {
         const sectionMatch = line.match(/^##\s+(.+)/);
         if (sectionMatch) {
             const sectionName = sectionMatch[1].trim();
-            // Check if this is the User Scenarios & Testing section
-            inRequirementsSection = sectionName.toLowerCase().includes('user scenarios') && sectionName.toLowerCase().includes('testing');
+            // More flexible matching for requirements sections - look for common requirement keywords
+            inRequirementsSection = sectionName.toLowerCase().includes('user') || 
+                                   sectionName.toLowerCase().includes('scenario') || 
+                                   sectionName.toLowerCase().includes('requirement') ||
+                                   sectionName.toLowerCase().includes('test') ||
+                                   sectionName.toLowerCase().includes('functional');
 
             if (inRequirementsSection) {
                 currentSection = sectionName;
@@ -284,11 +288,11 @@ function parseRequirements(filePath: string): SpecTreeItem[] {
             continue;
         }
 
-        // Match items under subsection (bullets, numbers, checklists)
+        // Match items under subsection (bullets, numbers, checklists) - improved regex
         if (currentSection && currentSubsection) {
             // Bullet, numbered, or checklist item
-            if (line.match(/^\s*([-*]|[x ]?[\[\]]|(\d+\.)?)\s+.+/)) {
-                let itemLabel = line.replace(/^\s*([-*]|[x ]?[\[\]]|(\d+\.)?)\s+/, '').trim();
+            if (line.match(/^\s*([-*+]|\d+\.|\[[x ]\])\s+.+/)) {
+                let itemLabel = line.replace(/^\s*([-*+]|\d+\.|\[[x ]\])\s*/, '').trim();
                 // Remove checkbox syntax from the label for requirements
                 itemLabel = itemLabel.replace(/^\[[ x]\]\s*/, '');
                 const itemKey = `${currentSection}::${currentSubsection}::${itemLabel}`;
@@ -322,10 +326,13 @@ function parseImplementations(filePath: string): SpecTreeItem[] {
         const sectionMatch = line.match(/^##\s+(.+)/);
         if (sectionMatch) {
             const sectionName = sectionMatch[1].trim();
-            // Check if this is the Review & Acceptance Checklist section
-            inImplementationsSection = sectionName.toLowerCase().includes('review') && 
-                                     sectionName.toLowerCase().includes('acceptance') && 
-                                     sectionName.toLowerCase().includes('checklist');
+            // More flexible matching for implementation sections - look for common implementation keywords
+            inImplementationsSection = sectionName.toLowerCase().includes('review') || 
+                                     sectionName.toLowerCase().includes('acceptance') || 
+                                     sectionName.toLowerCase().includes('checklist') ||
+                                     sectionName.toLowerCase().includes('implementation') ||
+                                     sectionName.toLowerCase().includes('development') ||
+                                     sectionName.toLowerCase().includes('task');
 
             if (inImplementationsSection) {
                 currentSection = sectionName;
@@ -361,14 +368,14 @@ function parseImplementations(filePath: string): SpecTreeItem[] {
             continue;
         }
 
-        // Match items under subsection (bullets, numbers, checklists)
+        // Match items under subsection (bullets, numbers, checklists) - improved regex
         if (currentSection && currentSubsection) {
             // Bullet, numbered, or checklist item
-            if (line.match(/^\s*([-*]|[x ]?[\[\]]|(\d+\.)?)\s+.+/)) {
-                let itemLabel = line.replace(/^\s*([-*]|[x ]?[\[\]]|(\d+\.)?)\s+/, '').trim();
+            if (line.match(/^\s*([-*+]|\d+\.|\[[x ]\])\s+.+/)) {
+                let itemLabel = line.replace(/^\s*([-*+]|\d+\.|\[[x ]\])\s*/, '').trim();
                 // Determine status from checkbox syntax
                 let status = 'pending';
-                const checkboxMatch = itemLabel.match(/^\[([x ])\]/);
+                const checkboxMatch = line.match(/^\s*\[([x ])\]/);
                 if (checkboxMatch) {
                     status = checkboxMatch[1] === 'x' ? 'completed' : 'pending';
                     // Remove checkbox syntax from the label for implementations  
@@ -536,14 +543,15 @@ export function activate(context: vscode.ExtensionContext) {
     }
     
     function setupFileWatcher() {
-        // Watch spec.md for changes
+        // Watch spec.md for changes in the specs directory structure
         let specFolder = undefined;
         const folders = vscode.workspace.workspaceFolders;
         if (folders && folders.length > 0) {
             specFolder = folders[0].uri.fsPath;
         }
         if (specFolder) {
-            const watcher = vscode.workspace.createFileSystemWatcher(new vscode.RelativePattern(specFolder, 'spec.md'));
+            // Watch for spec.md files in the specs directory and subdirectories
+            const watcher = vscode.workspace.createFileSystemWatcher(new vscode.RelativePattern(specFolder, '**/spec.md'));
             watcher.onDidChange(() => {
                 refreshAllProviders();
                 vscode.window.showInformationMessage('spec.md re-parsed!');
