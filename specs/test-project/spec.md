@@ -59,5 +59,6 @@ This section tests implementation parsing.
 
 ### Documentation
 - [x] API documentation updated
-- [ ] User documentation updated
+- [x] User documentation updated  
 - [ ] README updated
+- [ ] New test item added

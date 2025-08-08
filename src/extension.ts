@@ -373,9 +373,9 @@ function parseImplementations(filePath: string): SpecTreeItem[] {
             // Bullet, numbered, or checklist item
             if (line.match(/^\s*([-*+]|\d+\.|\[[x ]\])\s+.+/)) {
                 let itemLabel = line.replace(/^\s*([-*+]|\d+\.|\[[x ]\])\s*/, '').trim();
-                // Determine status from checkbox syntax
+                // Determine status from checkbox syntax - check for checkbox anywhere in the content
                 let status = 'pending';
-                const checkboxMatch = line.match(/^\s*\[([x ])\]/);
+                const checkboxMatch = itemLabel.match(/^\[([x ])\]/);
                 if (checkboxMatch) {
                     status = checkboxMatch[1] === 'x' ? 'completed' : 'pending';
                     // Remove checkbox syntax from the label for implementations  
