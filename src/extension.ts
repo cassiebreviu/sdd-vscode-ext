@@ -607,6 +607,13 @@ export function activate(context: vscode.ExtensionContext) {
             editor.selection = new vscode.Selection(pos, pos);
         })
     );
+
+        // Command for rocket icon button to implement the spec
+        context.subscriptions.push(
+            vscode.commands.registerCommand('sdd-vscode-ext.implementSpecRocket', async () => {
+                await vscode.commands.executeCommand('github.copilot.chat.sendMessage', 'implement the spec');
+            })
+        );
 }
 
 export function deactivate() {
