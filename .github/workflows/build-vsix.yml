@@ -1,0 +1,42 @@
+name: Build VSIX Extension
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-vsix:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Compile extension
+        run: npm run compile
+
+      - name: Bump patch version
+        id: bump_version
+        run: |
+          node -e "const fs=require('fs');const pkg=JSON.parse(fs.readFileSync('package.json','utf8')); const parts=pkg.version.split('.').map(Number); parts[2]=(parts[2]||0)+1; pkg.version=parts.join('.'); fs.writeFileSync('package.json',JSON.stringify(pkg,null,2)); console.log('Bumped version to', pkg.version);"
+
+      - name: Install vsce
+        run: npm install -g vsce
+
+      - name: Package VSIX
+        run: vsce package
+
+      - name: Upload VSIX artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: vsix-extension
+          path: '*.vsix'
