@@ -43,6 +43,19 @@ jobs:
             console.log('version=' + pkg.version);
           " >> $GITHUB_OUTPUT
 
+      - name: Configure Git for automated commits
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+
+      - name: Commit version bump
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: |
+          git add package.json
+          git commit -m "Bump version to $(node -pe "require('./package.json').version")" || echo "No changes to commit"
+          git push
+
       - name: Install vsce
         run: npm install -g @vscode/vsce
 
