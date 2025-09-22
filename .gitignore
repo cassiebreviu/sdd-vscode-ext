@@ -34,5 +34,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# VSIX packages
+*.vsix
+
 specs/002-simple-crud-app/spec.md
-sdd-vscode-ext-0.0.1.vsix

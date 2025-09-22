@@ -1,114 +1,116 @@
 {
-	"name": "specify",
-	"displayName": "Specify",
-	"description": "A VS Code extension for managing specifications for software development.",
-	"version": "0.0.1",
-	"publisher": "Microsoft",
-	"engines": {
-		"vscode": "^1.80.0"
-	},
-	"categories": ["Other"],
-	"main": "./out/extension.js",
-	"activationEvents": [
-		"onCommand:specify.helloWorld",
-		"onCommand:specify.reparseSpec",
-		"onCommand:specify.startProject"
-	],
-		"contributes": {
-			"viewsContainers": {
-				"activitybar": [
-					{
-						"id": "specDrivenDevelopment",
-						"title": "Specify",
-						"icon": "$(book)"
-					}
-				]
-			},
-			"views": {
-				"specDrivenDevelopment": [
-					{
-						"id": "specNavigationView",
-						"name": "Spec Navigation",
-						"icon": "$(book)"
-					},
-					{
-						"id": "requirementsView",
-						"name": "REQUIREMENTS",
-						"icon": "$(settings-gear)"
-					},
-					{
-						"id": "implementationsView",
-						"name": "IMPLEMENTATIONS",
-						"icon": "$(package)"
-					}
-				]
-			},
-			"commands": [
-				{
-					"command": "sdd-vscode-ext.helloWorld",
-					"title": "Hello World"
-				},
-				{
-					"command": "sdd-vscode-ext.reparseSpec",
-					"title": "Reparse Spec",
-					"icon": "$(refresh)"
-				},
-				{
-					"command": "sdd-vscode-ext.startProject",
-					"title": "Start Project",
-					"icon": "$(plus)"
-				},
-				{
-					"command": "sdd-vscode-ext.implementSpecRocket",
-					"title": "Implement Spec",
-					"icon": "$(rocket)"
-				}
-			],
-			"menus": {
-				"view/title": [
-					{
-						"command": "sdd-vscode-ext.startProject",
-						"when": "view == specNavigationView",
-						"group": "navigation@1"
-					},
-					{
-						"command": "sdd-vscode-ext.implementSpecRocket",
-						"when": "view == specNavigationView",
-						"group": "navigation@2"
-					},
-					{
-						"command": "sdd-vscode-ext.reparseSpec",
-						"when": "view == specNavigationView",
-						"group": "navigation"
-					},
-					{
-						"command": "sdd-vscode-ext.reparseSpec",
-						"when": "view == requirementsView",
-						"group": "navigation"
-					},
-					{
-						"command": "sdd-vscode-ext.reparseSpec",
-						"when": "view == implementationsView",
-						"group": "navigation"
-					}
-				]
-			}
-		},
-	"scripts": {
-		"vscode:prepublish": "npm run compile",
-		"compile": "tsc -p ./",
-		"watch": "tsc -watch -p ./",
-		"pretest": "npm run compile",
-		"test": "node ./out/test/runTest.js"
-	},
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/cassiebreviu/sdd-vscode-ext.git"
-	},
-	"devDependencies": {
-		"@types/vscode": "^1.80.0",
-		"typescript": "^5.0.0",
-		"tslint": "^6.1.3",
-		"@types/node": "^20.0.0"
-	}
+  "name": "specify",
+  "displayName": "Specify",
+  "description": "A VS Code extension for managing specifications for software development.",
+  "version": "0.0.1",
+  "publisher": "Microsoft",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "main": "./out/extension.js",
+  "activationEvents": [
+    "onCommand:specify.helloWorld",
+    "onCommand:specify.reparseSpec",
+    "onCommand:specify.startProject"
+  ],
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "specDrivenDevelopment",
+          "title": "Specify",
+          "icon": "$(book)"
+        }
+      ]
+    },
+    "views": {
+      "specDrivenDevelopment": [
+        {
+          "id": "specNavigationView",
+          "name": "Spec Navigation",
+          "icon": "$(book)"
+        },
+        {
+          "id": "requirementsView",
+          "name": "REQUIREMENTS",
+          "icon": "$(settings-gear)"
+        },
+        {
+          "id": "implementationsView",
+          "name": "IMPLEMENTATIONS",
+          "icon": "$(package)"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "sdd-vscode-ext.helloWorld",
+        "title": "Hello World"
+      },
+      {
+        "command": "sdd-vscode-ext.reparseSpec",
+        "title": "Reparse Spec",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "sdd-vscode-ext.startProject",
+        "title": "Start Project",
+        "icon": "$(plus)"
+      },
+      {
+        "command": "sdd-vscode-ext.implementSpecRocket",
+        "title": "Implement Spec",
+        "icon": "$(rocket)"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "sdd-vscode-ext.startProject",
+          "when": "view == specNavigationView",
+          "group": "navigation@1"
+        },
+        {
+          "command": "sdd-vscode-ext.implementSpecRocket",
+          "when": "view == specNavigationView",
+          "group": "navigation@2"
+        },
+        {
+          "command": "sdd-vscode-ext.reparseSpec",
+          "when": "view == specNavigationView",
+          "group": "navigation"
+        },
+        {
+          "command": "sdd-vscode-ext.reparseSpec",
+          "when": "view == requirementsView",
+          "group": "navigation"
+        },
+        {
+          "command": "sdd-vscode-ext.reparseSpec",
+          "when": "view == implementationsView",
+          "group": "navigation"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile",
+    "test": "node ./out/test/runTest.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cassiebreviu/sdd-vscode-ext.git"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.80.0",
+    "typescript": "^5.0.0",
+    "tslint": "^6.1.3",
+    "@types/node": "^20.0.0"
+  }
 }
