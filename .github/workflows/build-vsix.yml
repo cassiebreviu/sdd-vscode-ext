@@ -1,10 +1,11 @@
+---
 name: Build and Release VSIX Extension
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   build-vsix:
@@ -31,10 +32,10 @@ jobs:
         run: |
           node -e "
             const fs=require('fs');
-            const pkg=JSON.parse(fs.readFileSync('package.json','utf8')); 
-            const parts=pkg.version.split('.').map(Number); 
-            parts[2]=(parts[2]||0)+1; 
-            pkg.version=parts.join('.'); 
+            const pkg=JSON.parse(fs.readFileSync('package.json','utf8'));
+            const parts=pkg.version.split('.').map(Number);
+            parts[2]=(parts[2]||0)+1;
+            pkg.version=parts.join('.');
             fs.writeFileSync('package.json',JSON.stringify(pkg,null,2));
             console.log('version=' + pkg.version);
           " >> $GITHUB_OUTPUT
@@ -48,8 +49,12 @@ jobs:
       - name: Get package info
         id: package_info
         run: |
-          PACKAGE_NAME=$(node -e "console.log(JSON.parse(require('fs').readFileSync('package.json','utf8')).name)")
-          VERSION=$(node -e "console.log(JSON.parse(require('fs').readFileSync('package.json','utf8')).version)")
+          PACKAGE_NAME=$(node -e "
+            console.log(JSON.parse(require('fs').readFileSync('package.json','utf8')).name)
+          ")
+          VERSION=$(node -e "
+            console.log(JSON.parse(require('fs').readFileSync('package.json','utf8')).version)
+          ")
           echo "package_name=$PACKAGE_NAME" >> $GITHUB_OUTPUT
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "vsix_file=${PACKAGE_NAME}-${VERSION}.vsix" >> $GITHUB_OUTPUT
@@ -63,16 +68,16 @@ jobs:
           name: Release v${{ steps.package_info.outputs.version }}
           body: |
             ## VS Code Extension Release v${{ steps.package_info.outputs.version }}
-            
+
             This release contains the latest version of the Specify extension for VS Code.
-            
+
             ### Installation
             Download the `.vsix` file below and install it in VS Code:
             1. Open VS Code
             2. Go to Extensions view (Ctrl+Shift+X)
             3. Click the "..." menu and select "Install from VSIX..."
             4. Select the downloaded `.vsix` file
-            
+
             ### Changes
             - Version bump to v${{ steps.package_info.outputs.version }}
             - Latest features and bug fixes
