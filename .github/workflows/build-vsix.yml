@@ -1,4 +1,4 @@
-name: Build VSIX Extension
+name: Build and Release VSIX Extension
 
 on:
   push:
@@ -12,6 +12,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -27,16 +29,61 @@ jobs:
       - name: Bump patch version
         id: bump_version
         run: |
-          node -e "const fs=require('fs');const pkg=JSON.parse(fs.readFileSync('package.json','utf8')); const parts=pkg.version.split('.').map(Number); parts[2]=(parts[2]||0)+1; pkg.version=parts.join('.'); fs.writeFileSync('package.json',JSON.stringify(pkg,null,2)); console.log('Bumped version to', pkg.version);"
+          node -e "
+            const fs=require('fs');
+            const pkg=JSON.parse(fs.readFileSync('package.json','utf8')); 
+            const parts=pkg.version.split('.').map(Number); 
+            parts[2]=(parts[2]||0)+1; 
+            pkg.version=parts.join('.'); 
+            fs.writeFileSync('package.json',JSON.stringify(pkg,null,2));
+            console.log('version=' + pkg.version);
+          " >> $GITHUB_OUTPUT
 
       - name: Install vsce
-        run: npm install -g vsce
+        run: npm install -g @vscode/vsce
 
       - name: Package VSIX
         run: vsce package
 
-      - name: Upload VSIX artifact
+      - name: Get package info
+        id: package_info
+        run: |
+          PACKAGE_NAME=$(node -e "console.log(JSON.parse(require('fs').readFileSync('package.json','utf8')).name)")
+          VERSION=$(node -e "console.log(JSON.parse(require('fs').readFileSync('package.json','utf8')).version)")
+          echo "package_name=$PACKAGE_NAME" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "vsix_file=${PACKAGE_NAME}-${VERSION}.vsix" >> $GITHUB_OUTPUT
+
+      - name: Create Release (main branch only)
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        id: create_release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ steps.package_info.outputs.version }}
+          name: Release v${{ steps.package_info.outputs.version }}
+          body: |
+            ## VS Code Extension Release v${{ steps.package_info.outputs.version }}
+            
+            This release contains the latest version of the Specify extension for VS Code.
+            
+            ### Installation
+            Download the `.vsix` file below and install it in VS Code:
+            1. Open VS Code
+            2. Go to Extensions view (Ctrl+Shift+X)
+            3. Click the "..." menu and select "Install from VSIX..."
+            4. Select the downloaded `.vsix` file
+            
+            ### Changes
+            - Version bump to v${{ steps.package_info.outputs.version }}
+            - Latest features and bug fixes
+          files: ${{ steps.package_info.outputs.vsix_file }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload VSIX artifact (for PRs and testing)
         uses: actions/upload-artifact@v4
         with:
-          name: vsix-extension
+          name: vsix-extension-v${{ steps.package_info.outputs.version }}
           path: '*.vsix'
