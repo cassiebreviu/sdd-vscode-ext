@@ -421,7 +421,7 @@ export function activate(context: vscode.ExtensionContext) {
             function runUvxCommand() {
                 const outputChannel = vscode.window.createOutputChannel('SDD CLI Output');
                 outputChannel.show(true);
-                const args = ['--from', 'git+https://github.com/localden/sdd.git', 'specify', 'init', '--here', '--ai', 'copilot','force'];
+                const args = ['--from', 'git+https://github.com/localden/sdd.git', 'specify', 'init', '--here', '--ai', 'copilot','--force'];
                 outputChannel.appendLine(`Running: uvx ${args.join(' ')}`);
                 // Set cwd to the current workspace folder
                 const folders = vscode.workspace.workspaceFolders;
