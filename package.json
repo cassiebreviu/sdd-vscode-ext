@@ -2,7 +2,7 @@
   "name": "specify",
   "displayName": "Specify",
   "description": "A VS Code extension for managing specifications for software development.",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "publisher": "Microsoft",
   "engines": {
     "vscode": "^1.80.0"
