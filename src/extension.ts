@@ -407,10 +407,10 @@ class ActionsProvider implements vscode.TreeDataProvider<vscode.TreeItem> {
         if (!element) {
             return Promise.resolve([
                 this.createActionItem('1. Start Specify', 'Create a new specification file', 'sdd-vscode-ext.startProject', 'plus'),
-                this.createActionItem('2. Prompt', 'Send custom specification to Copilot', 'sdd-vscode-ext.specifyCommand', 'lightbulb'),
-                this.createActionItem('3. Plan', 'Send custom plan request to Copilot', 'sdd-vscode-ext.planCommand', 'wand'),
-                this.createActionItem('4. Tasks', 'Create actionable task list from implementation plan', 'sdd-vscode-ext.tasksCommand', 'checklist'),
-                this.createActionItem('5. Implement', 'Execute /implement slash command in Copilot', 'sdd-vscode-ext.implementSpecRocket', 'rocket')
+                this.createActionItem('2. Prompt - Specify Feature/App', 'Send custom specification to Copilot', 'sdd-vscode-ext.specifyCommand', 'lightbulb'),
+                this.createActionItem('3. Plan - Define Tech Stack', 'Command to provide your tech stack and architecture choices.', 'sdd-vscode-ext.planCommand', 'wand'),
+                this.createActionItem('4. Tasks - Actionable Task List', 'Create actionable task list from implementation plan', 'sdd-vscode-ext.tasksCommand', 'checklist'),
+                this.createActionItem('5. Implement - Create the Feature/App', 'Execute /implement slash command in Copilot', 'sdd-vscode-ext.implementSpecRocket', 'rocket')
             ]);
         }
         return Promise.resolve([]);
