@@ -72,8 +72,13 @@
         "icon": "$(wand)"
       },
       {
+        "command": "sdd-vscode-ext.planCommand",
+        "title": "3. Plan Command",
+        "icon": "$(list-ordered)"
+      },
+      {
         "command": "sdd-vscode-ext.implementSpecRocket",
-        "title": "3. Implement Spec",
+        "title": "4. Implement Spec",
         "icon": "$(rocket)"
       }
     ],

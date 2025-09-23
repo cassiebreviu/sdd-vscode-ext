@@ -408,7 +408,8 @@ class ActionsProvider implements vscode.TreeDataProvider<vscode.TreeItem> {
             return Promise.resolve([
                 this.createActionItem('1. Create New Spec', 'Create a new specification file', 'sdd-vscode-ext.startProject', 'plus'),
                 this.createActionItem('2. Specify Command', 'Send custom specification to Copilot', 'sdd-vscode-ext.specifyCommand', 'wand'),
-                this.createActionItem('3. Implement Spec', 'Send "implement the spec" to Copilot', 'sdd-vscode-ext.implementSpecRocket', 'rocket')
+                this.createActionItem('3. Plan Command', 'Send custom plan request to Copilot', 'sdd-vscode-ext.planCommand', 'list-ordered'),
+                this.createActionItem('4. Implement Spec', 'Send "implement the spec" to Copilot', 'sdd-vscode-ext.implementSpecRocket', 'rocket')
             ]);
         }
         return Promise.resolve([]);
@@ -712,6 +713,29 @@ export function activate(context: vscode.ExtensionContext) {
             if (userInput && userInput.trim()) {
                 const specifyCommand = `/specify ${userInput.trim()}`;
                 await sendToCopilot(specifyCommand);
+            }
+        })
+    );
+
+    // Command for /plan slash command with user input
+    context.subscriptions.push(
+        vscode.commands.registerCommand('sdd-vscode-ext.planCommand', async () => {
+            const userInput = await vscode.window.showInputBox({
+                prompt: 'Enter your planning request',
+                placeHolder: 'e.g., plan the architecture for user auth, create a project roadmap, outline testing strategy...',
+                title: 'Plan Command Input',
+                ignoreFocusOut: true,
+                validateInput: (value) => {
+                    if (!value || value.trim().length === 0) {
+                        return 'Please enter a planning request';
+                    }
+                    return null;
+                }
+            });
+
+            if (userInput && userInput.trim()) {
+                const planCommand = `/plan ${userInput.trim()}`;
+                await sendToCopilot(planCommand);
             }
         })
     );
