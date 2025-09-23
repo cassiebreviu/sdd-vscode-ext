@@ -1,5 +1,5 @@
 {
- "name": "specify",
+  "name": "specify",
   "displayName": "Specify",
   "description": "A VS Code extension for managing specifications for software development.",
   "version": "0.0.4",
@@ -29,6 +29,12 @@
     "views": {
       "specDrivenDevelopment": [
         {
+          "id": "actionsView",
+          "name": "ACTIONS",
+          "icon": "$(zap)",
+          "when": "true"
+        },
+        {
           "id": "specNavigationView",
           "name": "SPEC NAVIGATION",
           "icon": "$(book)"
@@ -57,37 +63,22 @@
       },
       {
         "command": "sdd-vscode-ext.startProject",
-        "title": "Start Project",
+        "title": "1. Create New Spec",
         "icon": "$(plus)"
-      },      
+      },
       {
         "command": "sdd-vscode-ext.specifyCommand",
-        "title": "Specify Command",
-        "icon": "$(lightbulb)"
+        "title": "2. Specify Command",
+        "icon": "$(wand)"
       },
       {
         "command": "sdd-vscode-ext.implementSpecRocket",
-        "title": "Implement Spec",
+        "title": "3. Implement Spec",
         "icon": "$(rocket)"
       }
     ],
     "menus": {
       "view/title": [
-        {
-          "command": "sdd-vscode-ext.startProject",
-          "when": "view == specNavigationView",
-          "group": "navigation@1"
-        },        
-        {
-          "command": "sdd-vscode-ext.specifyCommand",
-          "when": "view == specNavigationView",
-          "group": "navigation@2"
-        },
-        {
-          "command": "sdd-vscode-ext.implementSpecRocket",
-          "when": "view == specNavigationView",
-          "group": "navigation@3"
-        },
         {
           "command": "sdd-vscode-ext.reparseSpec",
           "when": "view == specNavigationView",

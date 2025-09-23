@@ -395,6 +395,42 @@ function parseImplementations(filePath: string): SpecTreeItem[] {
     return items;
 }
 
+class ActionsProvider implements vscode.TreeDataProvider<vscode.TreeItem> {
+    private _onDidChangeTreeData: vscode.EventEmitter<vscode.TreeItem | undefined | void> = new vscode.EventEmitter<vscode.TreeItem | undefined | void>();
+    readonly onDidChangeTreeData: vscode.Event<vscode.TreeItem | undefined | void> = this._onDidChangeTreeData.event;
+
+    getTreeItem(element: vscode.TreeItem): vscode.TreeItem {
+        return element;
+    }
+
+    getChildren(element?: vscode.TreeItem): Thenable<vscode.TreeItem[]> {
+        if (!element) {
+            return Promise.resolve([
+                this.createActionItem('1. Create New Spec', 'Create a new specification file', 'sdd-vscode-ext.startProject', 'plus'),
+                this.createActionItem('2. Specify Command', 'Send custom specification to Copilot', 'sdd-vscode-ext.specifyCommand', 'wand'),
+                this.createActionItem('3. Implement Spec', 'Send "implement the spec" to Copilot', 'sdd-vscode-ext.implementSpecRocket', 'rocket')
+            ]);
+        }
+        return Promise.resolve([]);
+    }
+
+    private createActionItem(label: string, tooltip: string, command: string, icon: string): vscode.TreeItem {
+        const item = new vscode.TreeItem(label, vscode.TreeItemCollapsibleState.None);
+        item.tooltip = tooltip;
+        item.command = {
+            command: command,
+            title: label
+        };
+        item.iconPath = new vscode.ThemeIcon(icon);
+        item.contextValue = 'action';
+        return item;
+    }
+
+    refresh() {
+        this._onDidChangeTreeData.fire();
+    }
+}
+
 export function activate(context: vscode.ExtensionContext) {
     // Command to start a new project using SDD CLI
     context.subscriptions.push(
@@ -469,11 +505,17 @@ export function activate(context: vscode.ExtensionContext) {
     let provider: SpecProvider | undefined;
     let requirementsProvider: RequirementsProvider | undefined;
     let implementationsProvider: ImplementationsProvider | undefined;
+    let actionsProvider: ActionsProvider | undefined;
+    
+    // Register Actions provider immediately (doesn't depend on spec files)
+    actionsProvider = new ActionsProvider();
+    vscode.window.registerTreeDataProvider('actionsView', actionsProvider);
     
     function refreshAllProviders() {
         if (provider) provider.refresh();
         if (requirementsProvider) requirementsProvider.refresh();
         if (implementationsProvider) implementationsProvider.refresh();
+        if (actionsProvider) actionsProvider.refresh();
     }
     
     vscode.workspace.onDidSaveTextDocument((doc) => {
