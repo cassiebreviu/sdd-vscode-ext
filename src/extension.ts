@@ -395,6 +395,44 @@ function parseImplementations(filePath: string): SpecTreeItem[] {
     return items;
 }
 
+class ActionsProvider implements vscode.TreeDataProvider<vscode.TreeItem> {
+    private _onDidChangeTreeData: vscode.EventEmitter<vscode.TreeItem | undefined | void> = new vscode.EventEmitter<vscode.TreeItem | undefined | void>();
+    readonly onDidChangeTreeData: vscode.Event<vscode.TreeItem | undefined | void> = this._onDidChangeTreeData.event;
+
+    getTreeItem(element: vscode.TreeItem): vscode.TreeItem {
+        return element;
+    }
+
+    getChildren(element?: vscode.TreeItem): Thenable<vscode.TreeItem[]> {
+        if (!element) {
+            return Promise.resolve([
+                this.createActionItem('1. Start Specify', 'Create a new specification file', 'sdd-vscode-ext.startProject', 'plus'),
+                this.createActionItem('2. Prompt - Specify Feature/App', 'Send custom specification to Copilot', 'sdd-vscode-ext.specifyCommand', 'lightbulb'),
+                this.createActionItem('3. Plan - Define Tech Stack', 'Command to provide your tech stack and architecture choices.', 'sdd-vscode-ext.planCommand', 'wand'),
+                this.createActionItem('4. Tasks - Actionable Task List', 'Create actionable task list from implementation plan', 'sdd-vscode-ext.tasksCommand', 'checklist'),
+                this.createActionItem('5. Implement - Create the Feature/App', 'Execute /implement slash command in Copilot', 'sdd-vscode-ext.implementSpecRocket', 'rocket')
+            ]);
+        }
+        return Promise.resolve([]);
+    }
+
+    private createActionItem(label: string, tooltip: string, command: string, icon: string): vscode.TreeItem {
+        const item = new vscode.TreeItem(label, vscode.TreeItemCollapsibleState.None);
+        item.tooltip = tooltip;
+        item.command = {
+            command: command,
+            title: label
+        };
+        item.iconPath = new vscode.ThemeIcon(icon);
+        item.contextValue = 'action';
+        return item;
+    }
+
+    refresh() {
+        this._onDidChangeTreeData.fire();
+    }
+}
+
 export function activate(context: vscode.ExtensionContext) {
     // Command to start a new project using SDD CLI
     context.subscriptions.push(
@@ -469,11 +507,17 @@ export function activate(context: vscode.ExtensionContext) {
     let provider: SpecProvider | undefined;
     let requirementsProvider: RequirementsProvider | undefined;
     let implementationsProvider: ImplementationsProvider | undefined;
+    let actionsProvider: ActionsProvider | undefined;
+    
+    // Register Actions provider immediately (doesn't depend on spec files)
+    actionsProvider = new ActionsProvider();
+    vscode.window.registerTreeDataProvider('actionsView', actionsProvider);
     
     function refreshAllProviders() {
         if (provider) provider.refresh();
         if (requirementsProvider) requirementsProvider.refresh();
         if (implementationsProvider) implementationsProvider.refresh();
+        if (actionsProvider) actionsProvider.refresh();
     }
     
     vscode.workspace.onDidSaveTextDocument((doc) => {
@@ -496,8 +540,6 @@ export function activate(context: vscode.ExtensionContext) {
         }
 
         if (!specPath || !fs.existsSync(specPath)) {
-            vscode.window.showErrorMessage('spec.md not found in workspace. Will retry every 1 minute. Please add spec.md to your project.');
-
             // Start 1-minute retry mechanism
             function scheduleRetry() {
                 retryTimer = setTimeout(async () => {
@@ -608,12 +650,104 @@ export function activate(context: vscode.ExtensionContext) {
         })
     );
 
+    // Helper function to send messages to Copilot
+    async function sendToCopilot(message: string) {
+        try {
+            // Try the newest chat API first
+            await vscode.commands.executeCommand('workbench.action.chat.open', {
+                query: message
+            });
+        } catch (error) {
+            try {
+                // Fallback to Copilot-specific commands
+                await vscode.commands.executeCommand('github.copilot.chat.newChatFromSelection', {
+                    message: message
+                });
+            } catch (fallbackError) {
+                try {
+                    // Alternative Copilot command
+                    await vscode.commands.executeCommand('github.copilot.chat.newChat', message);
+                } catch (secondFallbackError) {
+                    try {
+                        // Last resort: just open the chat panel
+                        await vscode.commands.executeCommand('workbench.panel.chat.view.copilot.focus');
+                        vscode.window.showInformationMessage(`Copilot chat opened. Please ask: "${message}"`);
+                    } catch (finalError) {
+                        // Show helpful error
+                        vscode.window.showErrorMessage(
+                            'Could not open Copilot chat. Please ensure GitHub Copilot is installed and enabled.',
+                            'Install Copilot'
+                        ).then(selection => {
+                            if (selection === 'Install Copilot') {
+                                vscode.commands.executeCommand('workbench.view.extensions', '@id:github.copilot-chat');
+                            }
+                        });
+                    }
+                }
+            }
+        }
+    }
+
+        // Command for /tasks slash command (no input required)
+    context.subscriptions.push(
+        vscode.commands.registerCommand('sdd-vscode-ext.tasksCommand', async () => {
+            const tasksCommand = '/tasks';
+            await sendToCopilot(tasksCommand);
+        })
+    );
+
         // Command for rocket icon button to implement the spec
         context.subscriptions.push(
             vscode.commands.registerCommand('sdd-vscode-ext.implementSpecRocket', async () => {
-                await vscode.commands.executeCommand('github.copilot.chat.sendMessage', 'implement the spec');
+                await sendToCopilot('/implement');
             })
-        );
+        );    // Command for /specify slash command with user input
+    context.subscriptions.push(
+        vscode.commands.registerCommand('sdd-vscode-ext.specifyCommand', async () => {
+            const userInput = await vscode.window.showInputBox({
+                prompt: 'Enter your specification request',
+                placeHolder: 'e.g., create a login form, add error handling, implement user authentication...',
+                title: 'Specify Command Input',
+                ignoreFocusOut: true,
+                validateInput: (value) => {
+                    if (!value || value.trim().length === 0) {
+                        return 'Please enter a specification request';
+                    }
+                    return null;
+                }
+            });
+
+            if (userInput && userInput.trim()) {
+                const specifyCommand = `/specify ${userInput.trim()}`;
+                await sendToCopilot(specifyCommand);
+            }
+        })
+    );
+
+    // Command for /plan slash command with user input
+    context.subscriptions.push(
+        vscode.commands.registerCommand('sdd-vscode-ext.planCommand', async () => {
+            const userInput = await vscode.window.showInputBox({
+                prompt: 'Enter your planning request',
+                placeHolder: 'e.g., plan the architecture for user auth, create a project roadmap, outline testing strategy...',
+                title: 'Plan Command Input',
+                ignoreFocusOut: true,
+                validateInput: (value) => {
+                    if (!value || value.trim().length === 0) {
+                        return 'Please enter a planning request';
+                    }
+                    return null;
+                }
+            });
+
+            if (userInput && userInput.trim()) {
+                const planCommand = `/plan ${userInput.trim()}`;
+                await sendToCopilot(planCommand);
+            }
+        })
+    );
+
+
 }
 
 export function deactivate() {
