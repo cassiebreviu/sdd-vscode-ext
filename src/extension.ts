@@ -608,10 +608,48 @@ export function activate(context: vscode.ExtensionContext) {
         })
     );
 
+    // Helper function to send messages to Copilot
+    async function sendToCopilot(message: string) {
+        try {
+            // Try the newest chat API first
+            await vscode.commands.executeCommand('workbench.action.chat.open', {
+                query: message
+            });
+        } catch (error) {
+            try {
+                // Fallback to Copilot-specific commands
+                await vscode.commands.executeCommand('github.copilot.chat.newChatFromSelection', {
+                    message: message
+                });
+            } catch (fallbackError) {
+                try {
+                    // Alternative Copilot command
+                    await vscode.commands.executeCommand('github.copilot.chat.newChat', message);
+                } catch (secondFallbackError) {
+                    try {
+                        // Last resort: just open the chat panel
+                        await vscode.commands.executeCommand('workbench.panel.chat.view.copilot.focus');
+                        vscode.window.showInformationMessage(`Copilot chat opened. Please ask: "${message}"`);
+                    } catch (finalError) {
+                        // Show helpful error
+                        vscode.window.showErrorMessage(
+                            'Could not open Copilot chat. Please ensure GitHub Copilot is installed and enabled.',
+                            'Install Copilot'
+                        ).then(selection => {
+                            if (selection === 'Install Copilot') {
+                                vscode.commands.executeCommand('workbench.view.extensions', '@id:github.copilot-chat');
+                            }
+                        });
+                    }
+                }
+            }
+        }
+    }
+
         // Command for rocket icon button to implement the spec
         context.subscriptions.push(
             vscode.commands.registerCommand('sdd-vscode-ext.implementSpecRocket', async () => {
-                await vscode.commands.executeCommand('github.copilot.chat.sendMessage', 'implement the spec');
+                await sendToCopilot('implement the spec');
             })
         );
 }
