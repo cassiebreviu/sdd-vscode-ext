@@ -496,8 +496,6 @@ export function activate(context: vscode.ExtensionContext) {
         }
 
         if (!specPath || !fs.existsSync(specPath)) {
-            vscode.window.showErrorMessage('spec.md not found in workspace. Will retry every 1 minute. Please add spec.md to your project.');
-
             // Start 1-minute retry mechanism
             function scheduleRetry() {
                 retryTimer = setTimeout(async () => {
@@ -652,6 +650,31 @@ export function activate(context: vscode.ExtensionContext) {
                 await sendToCopilot('implement the spec');
             })
         );
+
+    // Command for /specify slash command with user input
+    context.subscriptions.push(
+        vscode.commands.registerCommand('sdd-vscode-ext.specifyCommand', async () => {
+            const userInput = await vscode.window.showInputBox({
+                prompt: 'Enter your specification request',
+                placeHolder: 'e.g., create a login form, add error handling, implement user authentication...',
+                title: 'Specify Command Input',
+                ignoreFocusOut: true,
+                validateInput: (value) => {
+                    if (!value || value.trim().length === 0) {
+                        return 'Please enter a specification request';
+                    }
+                    return null;
+                }
+            });
+
+            if (userInput && userInput.trim()) {
+                const specifyCommand = `/specify ${userInput.trim()}`;
+                await sendToCopilot(specifyCommand);
+            }
+        })
+    );
+
+
 }
 
 export function deactivate() {

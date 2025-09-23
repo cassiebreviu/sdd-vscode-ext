@@ -59,6 +59,11 @@
         "command": "sdd-vscode-ext.startProject",
         "title": "Start Project",
         "icon": "$(plus)"
+      },      
+      {
+        "command": "sdd-vscode-ext.specifyCommand",
+        "title": "Specify Command",
+        "icon": "$(lightbulb)"
       },
       {
         "command": "sdd-vscode-ext.implementSpecRocket",
@@ -72,11 +77,16 @@
           "command": "sdd-vscode-ext.startProject",
           "when": "view == specNavigationView",
           "group": "navigation@1"
+        },        
+        {
+          "command": "sdd-vscode-ext.specifyCommand",
+          "when": "view == specNavigationView",
+          "group": "navigation@2"
         },
         {
           "command": "sdd-vscode-ext.implementSpecRocket",
           "when": "view == specNavigationView",
-          "group": "navigation@2"
+          "group": "navigation@3"
         },
         {
           "command": "sdd-vscode-ext.reparseSpec",
