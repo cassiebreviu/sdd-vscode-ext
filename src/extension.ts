@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import { exec, spawn } from 'child_process';
+import { spawn } from 'child_process';
 
 let retryTimer: NodeJS.Timeout | undefined;
 
@@ -438,40 +438,61 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(
         vscode.commands.registerCommand('sdd-vscode-ext.startProject', async () => {
             vscode.window.showInformationMessage('Starting SDD project in this folder...');
-            // Check if uvx is installed
-            exec('which uvx', (whichError, whichStdout, whichStderr) => {
-                if (whichError || !whichStdout.trim()) {
-                    vscode.window.showInformationMessage('uvx not found. Installing uvx...');
-                    exec('pipx install uv', (pipxError, pipxStdout, pipxStderr) => {
-                        if (pipxError) {
-                            vscode.window.showErrorMessage('Failed to install uvx using pipx. Please install uvx manually: https://docs.astral.sh/uv/getting-started/installation/');
-                            console.error('pipx install uv error:', pipxError);
-                            return;
-                        }
-                        vscode.window.showInformationMessage('uvx installed successfully! Running SDD project initialization...');
-                        runUvxCommand();
-                    });
-                } else {
-                    runUvxCommand();
-                }
-            });
+            // Detect uvx or uv (fallback) by attempting to run --version.
+            const outputChannel = vscode.window.createOutputChannel('SDD CLI Output');
+            outputChannel.show(true);
 
-            function runUvxCommand() {
-                const outputChannel = vscode.window.createOutputChannel('SDD CLI Output');
-                outputChannel.show(true);
-                const args = ['--from', 'git+https://github.com/github/spec-kit.git', 'specify', 'init', '--here', '--ai', 'copilot','--force'];
-                outputChannel.appendLine(`Running: uvx ${args.join(' ')}`);
-                // Set cwd to the current workspace folder
+            interface Runner { cmd: 'uvx' | 'uv'; argsPrefix: string[]; }
+
+            function tryCommand(cmd: string): Promise<boolean> {
+                return new Promise(resolve => {
+                    const child = spawn(cmd, ['--version'], { shell: true });
+                    let resolved = false;
+                    child.on('error', () => { if (!resolved) { resolved = true; resolve(false); } });
+                    child.on('exit', code => { if (!resolved) { resolved = true; resolve(code === 0); } });
+                });
+            }
+
+            async function resolveRunner(): Promise<Runner | undefined> {
+                if (await tryCommand('uvx')) return { cmd: 'uvx', argsPrefix: [] };
+                if (await tryCommand('uv')) return { cmd: 'uv', argsPrefix: ['tool', 'run'] };
+                return undefined;
+            }
+
+            function showInstallHelp() {
+                const platform = process.platform;
+                const mac = 'brew install uv';
+                const linux = 'curl -LsSf https://astral.sh/uv/install.sh | sh';
+                const win = 'iwr https://astral.sh/uv/install.ps1 -UseBasicParsing | iex';
+                const suggestion = platform === 'darwin' ? mac : (platform === 'win32' ? win : linux);
+                vscode.window.showErrorMessage(
+                    'uv (uvx) not found. Install it first – opening instructions.',
+                    'Open Docs', 'Copy Install Command'
+                ).then(sel => {
+                    if (sel === 'Open Docs') {
+                        vscode.env.openExternal(vscode.Uri.parse('https://docs.astral.sh/uv/getting-started/installation/'));
+                    } else if (sel === 'Copy Install Command') {
+                        vscode.env.clipboard.writeText(suggestion);
+                        vscode.window.showInformationMessage('Install command copied to clipboard. Paste it in your terminal, then re-run Start Specify.');
+                    }
+                });
+                outputChannel.appendLine('uv not detected. Please install following official instructions:');
+                outputChannel.appendLine('Docs: https://docs.astral.sh/uv/getting-started/installation/');
+                outputChannel.appendLine(`Suggested command for this platform: ${suggestion}`);
+            }
+
+            function runSpecify(runner: Runner) {
+                const baseArgs = ['--from', 'git+https://github.com/github/spec-kit.git', 'specify', 'init', '--here', '--ai', 'copilot', '--force'];
+                const args = [...runner.argsPrefix, ...baseArgs];
+                outputChannel.appendLine(`Running: ${runner.cmd} ${args.join(' ')}`);
                 const folders = vscode.workspace.workspaceFolders;
                 const cwd = folders && folders.length > 0 ? folders[0].uri.fsPath : process.cwd();
-                const child = spawn('uvx', args, { shell: true, cwd });
-
+                const child = spawn(runner.cmd, args, { shell: true, cwd });
                 let buffer = '';
                 child.stdout.on('data', async (data) => {
                     const text = data.toString();
                     outputChannel.append(text);
                     buffer += text;
-                    // Detect prompt (simple heuristic: line ends with ? or : or >)
                     const lines = buffer.split(/\r?\n/);
                     const lastLine = lines[lines.length - 2] || lines[lines.length - 1];
                     if (/\?\s*$|:\s*$|>\s*$/.test(lastLine)) {
@@ -483,13 +504,10 @@ export function activate(context: vscode.ExtensionContext) {
                         }
                     }
                 });
-                child.stderr.on('data', (data) => {
-                    outputChannel.append(data.toString());
-                });
+                child.stderr.on('data', (data) => outputChannel.append(data.toString()));
                 child.on('error', (error) => {
                     vscode.window.showErrorMessage(`Failed to start SDD project: ${error.message}`);
                     outputChannel.appendLine(`ERROR: ${error.message}`);
-                    outputChannel.appendLine(error.stack || '');
                 });
                 child.on('close', (code) => {
                     if (code === 0) {
@@ -500,6 +518,13 @@ export function activate(context: vscode.ExtensionContext) {
                     }
                 });
             }
+
+            const runner = await resolveRunner();
+            if (!runner) {
+                showInstallHelp();
+                return;
+            }
+            runSpecify(runner);
         })
     );
 
