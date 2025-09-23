@@ -12,7 +12,6 @@
   ],
   "main": "./out/extension.js",
   "activationEvents": [
-    "onCommand:specify.helloWorld",
     "onCommand:specify.reparseSpec",
     "onCommand:specify.startProject"
   ],
@@ -53,10 +52,6 @@
     },
     "commands": [
       {
-        "command": "sdd-vscode-ext.helloWorld",
-        "title": "Hello World"
-      },
-      {
         "command": "sdd-vscode-ext.reparseSpec",
         "title": "Reparse Spec",
         "icon": "$(refresh)"
@@ -69,16 +64,21 @@
       {
         "command": "sdd-vscode-ext.specifyCommand",
         "title": "2. Specify Command",
-        "icon": "$(wand)"
+        "icon": "$(lightbulb)"
       },
       {
         "command": "sdd-vscode-ext.planCommand",
         "title": "3. Plan Command",
-        "icon": "$(list-ordered)"
+        "icon": "$(wand)"
+      },
+      {
+        "command": "sdd-vscode-ext.tasksCommand",
+        "title": "4. Create Tasks",
+        "icon": "$(checklist)"
       },
       {
         "command": "sdd-vscode-ext.implementSpecRocket",
-        "title": "4. Implement Spec",
+        "title": "5. Implement Spec",
         "icon": "$(rocket)"
       }
     ],

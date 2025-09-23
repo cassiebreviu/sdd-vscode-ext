@@ -406,10 +406,11 @@ class ActionsProvider implements vscode.TreeDataProvider<vscode.TreeItem> {
     getChildren(element?: vscode.TreeItem): Thenable<vscode.TreeItem[]> {
         if (!element) {
             return Promise.resolve([
-                this.createActionItem('1. Create New Spec', 'Create a new specification file', 'sdd-vscode-ext.startProject', 'plus'),
-                this.createActionItem('2. Specify Command', 'Send custom specification to Copilot', 'sdd-vscode-ext.specifyCommand', 'wand'),
-                this.createActionItem('3. Plan Command', 'Send custom plan request to Copilot', 'sdd-vscode-ext.planCommand', 'list-ordered'),
-                this.createActionItem('4. Implement Spec', 'Send "implement the spec" to Copilot', 'sdd-vscode-ext.implementSpecRocket', 'rocket')
+                this.createActionItem('1. Start Specify', 'Create a new specification file', 'sdd-vscode-ext.startProject', 'plus'),
+                this.createActionItem('2. Prompt', 'Send custom specification to Copilot', 'sdd-vscode-ext.specifyCommand', 'lightbulb'),
+                this.createActionItem('3. Plan', 'Send custom plan request to Copilot', 'sdd-vscode-ext.planCommand', 'wand'),
+                this.createActionItem('4. Tasks', 'Create actionable task list from implementation plan', 'sdd-vscode-ext.tasksCommand', 'checklist'),
+                this.createActionItem('5. Implement', 'Execute /implement slash command in Copilot', 'sdd-vscode-ext.implementSpecRocket', 'rocket')
             ]);
         }
         return Promise.resolve([]);
@@ -687,14 +688,20 @@ export function activate(context: vscode.ExtensionContext) {
         }
     }
 
+        // Command for /tasks slash command (no input required)
+    context.subscriptions.push(
+        vscode.commands.registerCommand('sdd-vscode-ext.tasksCommand', async () => {
+            const tasksCommand = '/tasks';
+            await sendToCopilot(tasksCommand);
+        })
+    );
+
         // Command for rocket icon button to implement the spec
         context.subscriptions.push(
             vscode.commands.registerCommand('sdd-vscode-ext.implementSpecRocket', async () => {
-                await sendToCopilot('implement the spec');
+                await sendToCopilot('/implement');
             })
-        );
-
-    // Command for /specify slash command with user input
+        );    // Command for /specify slash command with user input
     context.subscriptions.push(
         vscode.commands.registerCommand('sdd-vscode-ext.specifyCommand', async () => {
             const userInput = await vscode.window.showInputBox({
