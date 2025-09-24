@@ -12,7 +12,6 @@ A powerful VS Code extension that seamlessly integrates with [Spec Kit](https://
 
 - 🤔 [What is the Specify Extension?](#-what-is-the-specify-extension)
 - ⚡ [Get started](#-get-started)
-- 🎯 [Key Features](#-key-features)
 - 🖥️ [Extension Overview](#️-extension-overview)
 - 📖 [Learn more](#-learn-more)
 - 💬 [Support](#-support)
@@ -82,29 +81,6 @@ Once initialized, use the numbered workflow actions:
 3. **Plan** - Create technical implementation plans
 4. **Tasks** - Generate actionable task lists
 5. **Implement** - Execute implementation with AI assistance
-
-## 🎯 Key Features
-
-### Visual Specification Management
-- **Hierarchical Navigation**: Browse specs with collapsible sections and subsections
-- **Smart Parsing**: Automatic detection of requirements, implementations, and tasks
-- **Real-time Updates**: File watchers ensure views stay synchronized with your documents
-- **Quick Navigation**: Click any item to jump directly to the relevant line in your spec file
-
-### GitHub Copilot Integration
-- **Slash Command Support**: Built-in commands for `/specify`, `/plan`, `/tasks`, and `/implement`
-- **Context-Aware AI**: Extension passes relevant spec context to Copilot for better responses
-- **Fallback Handling**: Multiple fallback mechanisms ensure Copilot integration works reliably
-
-### Progress Tracking
-- **Implementation Status**: Visual indicators for completed, in-progress, and pending items
-- **Parallel Task Detection**: Special icons for tasks that can run concurrently
-- **Phase Organization**: Tasks grouped by development phases with clear dependencies
-
-### Project Initialization
-- **Spec Kit Integration**: Direct integration with the latest Spec Kit templates
-- **Cross-Platform Support**: Works on Windows, macOS, and Linux
-- **Interactive Setup**: Guided prompts for AI assistant selection and configuration
 
 ## 🖥️ Extension Overview
 
